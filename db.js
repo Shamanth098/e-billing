@@ -11,10 +11,24 @@ async function init() {
     return;
   }
   
-  // Use environment URI, or fallback to local MongoDB
+  // Use environment URI, or fallback to local MongoDB in dev mode
   let uri = process.env.MONGODB_URI;
   
+  if (uri) {
+    console.log('MONGODB_URI environment variable detected.');
+  } else {
+    console.log('MONGODB_URI environment variable is NOT set in process.env.');
+  }
+  
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT || process.env.PORT;
+  
   if (!uri || uri.includes('<db_password>')) {
+    if (isProduction && !process.env.MONGODB_URI) {
+      const errorMsg = 'CRITICAL ERROR: MONGODB_URI environment variable is missing in production settings. Please set MONGODB_URI in your Railway Variables tab.';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
     console.log('No valid MONGODB_URI found (or password placeholder present). Falling back to local MongoDB...');
     uri = 'mongodb://127.0.0.1:27017/e-billing';
   } else {
